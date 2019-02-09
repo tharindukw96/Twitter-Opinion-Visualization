@@ -11,6 +11,52 @@
 
     <!-- Latest compiled JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+    <!--High chart dependencies-->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/export-data.js"></script>
+
+    <!--HighMap dependencies-->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://code.highcharts.com/maps/highmaps.js"></script>
+    <script src="https://code.highcharts.com/maps/modules/data.js"></script>
+    <script src="https://code.highcharts.com/maps/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/maps/modules/offline-exporting.js"></script>
+    <script src="https://code.highcharts.com/mapdata/custom/world.js"></script>
+
+    <!-- Flag sprites service provided by Martijn Lafeber, https://github.com/lafeber/world-flags-sprite/blob/master/LICENSE -->
+    <link rel="stylesheet" type="text/css" href="//github.com/downloads/lafeber/world-flags-sprite/flags32.css" />
+
+
+
+    <!--HighMap style css-->
+    <style>
+        #container {
+    height: 500px; 
+    width: 800px; 
+    margin: 0 auto; 
+}
+
+.highcharts-tooltip>span {
+    padding: 10px;
+    white-space: normal !important;
+    width: 200px;
+}
+
+.loading {
+    margin-top: 10em;
+    text-align: center;
+    color: gray;
+}
+
+.f32 .flag {
+    vertical-align: middle !important;
+}
+    </style>
+
 </head>
 
 <body>
@@ -46,11 +92,13 @@
                     </div>
 
                 </form>
+                <div id="emotion" style="height: 400px; min-width: 310px"></div>
             </div>
             <div id="menu1" class="tab-pane fade">
                 <h3 style='color:#38A1F3'>Heat Map</h3>
-                <p>Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
-                    consequat.</p>
+
+                <div id="container"></div>
+
             </div>
             <div id="menu2" class="tab-pane fade">
                 <h3 style='color:#38A1F3'>Timeline</h3>
@@ -62,10 +110,147 @@
                 <p>Eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
             </div>
         </div>
-        <img src='https://cdn5.identityforce.com/wp-content/uploads/2017/03/twitter-scams-900x500.jpg' height="70%"
-            width="100%">
+        <!--<img src='https://cdn5.identityforce.com/wp-content/uploads/2017/03/twitter-scams-900x500.jpg' height="70%"
+            width="100%">-->
 
     </div>
 </body>
+
+<!--High chart java sctript-->
+<script>
+    $.getJSON('https://cdn.jsdelivr.net/gh/highcharts/highcharts@v7.0.0/samples/data/new-intraday.json', function (data) {
+
+        // create the chart
+        Highcharts.stockChart('emotion', {
+
+
+            title: {
+                text: 'AAPL stock price by minute'
+            },
+
+            subtitle: {
+                text: 'Using ordinal X axis'
+            },
+
+            xAxis: {
+                gapGridLineWidth: 0
+            },
+
+            rangeSelector: {
+                buttons: [{
+                    type: 'hour',
+                    count: 1,
+                    text: '1h'
+                }, {
+                    type: 'day',
+                    count: 1,
+                    text: '1D'
+                }, {
+                    type: 'all',
+                    count: 1,
+                    text: 'All'
+                }],
+                selected: 1,
+                inputEnabled: false
+            },
+
+            series: [{
+                name: 'AAPL',
+                type: 'area',
+                data: data,
+                gapSize: 5,
+                tooltip: {
+                    valueDecimals: 2
+                },
+                fillColor: {
+                    linearGradient: {
+                        x1: 0,
+                        y1: 0,
+                        x2: 0,
+                        y2: 1
+                    },
+                    stops: [
+                        [0, Highcharts.getOptions().colors[0]],
+                        [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get('rgba')]
+                    ]
+                },
+                threshold: null
+            }]
+        });
+    });
+</script>
+
+<!--High map script-->
+<script type="text/javascript">
+
+    $.getJSON('https://cdn.jsdelivr.net/gh/highcharts/highcharts@v7.0.0/samples/data/world-population-density.json', function (data) {
+
+        // Prevent logarithmic errors in color calulcation
+        $.each(data, function () {
+            this.value = (this.value < 1 ? 1 : this.value);
+        });
+
+        // Initiate the chart
+        Highcharts.mapChart('container', {
+
+            chart: {
+                map: 'custom/world'
+            },
+
+            title: {
+                text: 'Fixed tooltip with HTML'
+            },
+
+            legend: {
+                title: {
+                    text: 'Population density per km²',
+                    style: {
+                        color: (Highcharts.theme && Highcharts.theme.textColor) || 'black'
+                    }
+                }
+            },
+
+            mapNavigation: {
+                enabled: true,
+                buttonOptions: {
+                    verticalAlign: 'bottom'
+                }
+            },
+
+            tooltip: {
+                backgroundColor: 'none',
+                borderWidth: 0,
+                shadow: false,
+                useHTML: true,
+                padding: 0,
+                pointFormat: '<span class="f32"><span class="flag {point.properties.hc-key}">' +
+                    '</span></span> {point.name}<br>' +
+                    '<span style="font-size:30px">{point.value}/km²</span>',
+                positioner: function () {
+                    return { x: 0, y: 250 };
+                }
+            },
+
+            colorAxis: {
+                min: 1,
+                max: 1000,
+                type: 'logarithmic'
+            },
+
+            series: [{
+                data: data,
+                joinBy: ['iso-a3', 'code3'],
+                name: 'Population density',
+                states: {
+                    hover: {
+                        color: '#a4edba'
+                    }
+                }
+            }]
+        });
+    });
+
+
+</script>
 
 </html>
